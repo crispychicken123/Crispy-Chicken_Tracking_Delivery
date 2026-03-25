@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import/Export Tools - Delivery Crispy Chicken</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #e74c3c;
+            --secondary-color: #2c3e50;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #c0392b;
+            --info-color: #3498db;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --white: #ffffff;
+            --gray: #bdc3c7;
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --radius: 10px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), #c0392b);
+            color: var(--white);
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            font-size: 2rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .tool-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            border-top: 4px solid var(--primary-color);
+        }
+
+        .tool-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tool-header i {
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .tool-header h2 {
+            margin: 0;
+            color: var(--secondary-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        select, input[type="file"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        select:focus, input[type="file"]:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+            width: 100%;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-info {
+            background: var(--info-color);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: var(--dark-color);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        .instructions {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: var(--radius);
+            margin-top: 20px;
+            border-left: 4px solid var(--info-color);
+        }
+
+        .instructions h4 {
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+        }
+
+        .instructions ul {
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        .preview-box {
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .preview-box table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .preview-box th {
+            background: #e9ecef;
+            padding: 8px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .preview-box td {
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 0.85rem;
+        }
+
+        .status-bar {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: var(--radius);
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #666;
+            border-top: 1px solid #eee;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .quick-action-btn {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: var(--radius);
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .quick-action-btn:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .quick-action-btn i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .quick-action-btn span {
+            display: block;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        .template-download {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f4fd;
+            border-radius: var(--radius);
+        }
+
+        .template-download a {
+            color: var(--info-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .template-download a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <i class="fas fa-exchange-alt"></i>
+                Import & Export Tools
+                <small style="font-size: 0.6em; opacity: 0.8;">Delivery Crispy Chicken</small>
+            </h1>
+        </header>
+
+        <div class="main-content">
+            <!-- Import Section -->
+            <div class="tool-card">
+                <div class="tool-header">
+                    <i class="fas fa-file-import"></i>
+                    <h2>Import Data</h2>
+                </div>
+
+                <div class="form-group">
+                    <label>Select Import Source</label>
+                    <select id="importSource">
+                        <option value="excel">Excel File (.xlsx, .xls)</option>
+                        <option value="csv">CSV File (.csv)</option>
+                        <option value="json">JSON File (.json)</option>
+                        <option value="backup">System Backup (.json)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Upload File</label>
+                    <input type="file" id="importFile" accept=".xlsx,.xls,.csv,.json">
+                </div>
+
+                <div class="form-group">
+                    <label>Import Mode</label>
+                    <select id="importMode">
+                        <option value="merge">Merge (Update existing, add new)</option>
+                        <option value="replace">Replace All Data</option>
+                        <option value="append">Append Only (Add new only)</option>
+                    </select>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="previewImport()">
+                        <i class="fas fa-eye"></i> Preview
+                    </button>
+                    <button class="btn btn-success" onclick="executeImport()">
+                        <i class="fas fa-upload"></i> Import Now
+                    </button>
+                </div>
+
+                <div id="importPreview" class="preview-box" style="display: none;">
+                    <h4>Preview (First 5 rows)</h4>
+                    <table id="previewTable"></table>
+                </div>
+
+                <div id="importStatus" class="status-bar" style="display: none;"></div>
+
+                <div class="instructions">
+                    <h4><i class="fas fa-info-circle"></i> Import Instructions</h4>
+                    <ul>
+                        <li>Supported formats: Excel, CSV, JSON</li>
+                        <li>Required columns: Order no, Cus. Name, Order Total</li>
+                        <li>File size limit: 10MB</li>
+                        <li>Always preview before importing</li>
+                        <li>Backup your data before replacement</li>
+                    </ul>
+                </div>
+
+                <div class="template-download">
+                    <p><i class="fas fa-download"></i> Download Import Template:</p>
+                    <div class="btn-group">
+                        <button class="btn btn-info" onclick="downloadTemplate('excel')">
+                            <i class="fas fa-file-excel"></i> Excel Template
+                        </button>
+                        <button class="btn btn-warning" onclick="downloadTemplate('csv')">
+                            <i class="fas fa-file-csv"></i> CSV Template
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Section -->
+            <div class="tool-card">
+                <div class="tool-header">
+                    <i class="fas fa-file-export"></i>
+                    <h2>Export Data</h2>
+                </div>
+
+                <div class="form-group">
+                    <label>Export Format</label>
+                    <select id="exportFormat">
+                        <option value="excel">Excel (.xlsx)</option>
+                        <option value="pdf">PDF (.pdf)</option>
+                        <option value="csv">CSV (.csv)</option>
+                        <option value="json">JSON (.json)</option>
+                        <option value="backup">Full System Backup</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Data Range</label>
+                    <select id="exportRange">
+                        <option value="all">All Data</option>
+                        <option value="today">Today's Orders</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+
+                <div id="customRange" style="display: none; margin-top: 10px;">
+                    <div style="display: flex; gap: 10px;">
+                        <input type="date" id="startDate" style="flex: 1;">
+                        <input type="date" id="endDate" style="flex: 1;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Include Fields</label>
+                    <div style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: var(--radius);">
+                        <label style="display: block; margin-bottom: 5px;">
+                            <input type="checkbox" class="export-field" value="Order no" checked> Order ID
+                        </label>
+                        <label style="display: block; margin-bottom: 5px;">
+                            <input type="checkbox" class="export-field" value="Cus. Name" checked> Customer Name
+                        </label>
+                        <label style="display: block; margin-bottom: 5px;">
+                            <input type="checkbox" class="export-field" value="Cus Phone" checked> Phone
+                        </label>
+                        <label style="display: block; margin-bottom: 5px;">
+                            <input type="checkbox" class="export-field" value="Address" checked> Address
+                        </label>
+                        <label style="display: block; margin-bottom: 5px;">
+                            <input type="checkbox" class="export-field" value="Outlet" checked> Outlet
+                        </label>
+                        <label style="display: block; margin-bottom: 5px;">
+                            <input type="checkbox" class="export-field" value="Order Total" checked> Amount
+                        </label>
+                        <label style="display: block; margin-bottom: 5px;">
+                            <input type="checkbox" class="export-field" value="Agent Name" checked> Agent
+                        </label>
+                        <label style="display: block; margin-bottom: 5px;">
+                            <input type="checkbox" class="export-field" value="status" checked> Status
+                        </label>
+                        <label style="display: block; margin-bottom: 5px;">
+                            <input type="checkbox" class="export-field" value="Payment Status"> Payment Status
+                        </label>
+                        <label style="display: block; margin-bottom: 5px;">
+                            <input type="checkbox" class="export-field" value="Notes"> Notes
+                        </label>
+                    </div>
+                </div>
+
+                <button class="btn btn-success" onclick="executeExport()">
+                    <i class="fas fa-download"></i> Export Now
+                </button>
+
+                <div class="quick-actions">
+                    <div class="quick-action-btn" onclick="quickExport('daily')">
+                        <i class="fas fa-calendar-day"></i>
+                        <span>Daily Report</span>
+                    </div>
+                    <div class="quick-action-btn" onclick="quickExport('agents')">
+                        <i class="fas fa-users"></i>
+                        <span>Agent Performance</span>
+                    </div>
+                    <div class="quick-action-btn" onclick="quickExport('revenue')">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Revenue Report</span>
+                    </div>
+                    <div class="quick-action-btn" onclick="quickExport('backup')">
+                        <i class="fas fa-database"></i>
+                        <span>Full Backup</span>
+                    </div>
+                </div>
+
+                <div class="instructions">
+                    <h4><i class="fas fa-info-circle"></i> Export Features</h4>
+                    <ul>
+                        <li>Multiple format support</li>
+                        <li>Custom date ranges</li>
+                        <li>Selective field export</li>
+                        <li>Quick export templates</li>
+                        <li>Auto-naming with timestamp</li>
+                    </ul>
+                </div>
+
+                <div id="exportStatus" class="status-bar" style="display: none;"></div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Delivery Crispy Chicken - Import/Export Tools v1.0</p>
+            <p>Use these tools to manage your data efficiently</p>
+            <button class="btn btn-primary" style="width: auto; margin-top: 10px;" onclick="window.close()">
+                <i class="fas fa-times"></i> Close Window
+            </button>
+        </footer>
+    </div>
+
+    <script>
+        // استيراد البيانات من localStorage
+        let ordersData = [];
+        let branches = [];
+        let agents = [];
+        let settings = {};
+
+        function loadData() {
+            try {
+                const orders = localStorage.getItem('deliveryApp_orders');
+                const branchesData = localStorage.getItem('deliveryApp_branches');
+                const agentsData = localStorage.getItem('deliveryApp_agents');
+                const settingsData = localStorage.getItem('deliveryApp_settings');
+
+                if (orders) ordersData = JSON.parse(orders);
+                if (branchesData) branches = JSON.parse(branchesData);
+                if (agentsData) agents = JSON.parse(agentsData);
+                if (settingsData) settings = JSON.parse(settingsData);
+            } catch (e) {
+                console.error('Error loading data:', e);
+                showStatus('error', 'Failed to load data from main system');
+            }
+        }
+
+        // تحديث عرض النطاق الزمني المخصص
+        document.getElementById('exportRange').addEventListener('change', function() {
+            const customRange = document.getElementById('customRange');
+            customRange.style.display = this.value === 'custom' ? 'block' : 'none';
+            
+            // تعيين التواريخ الافتراضية
+            if (this.value === 'custom') {
+                const today = new Date();
+                const weekAgo = new Date();
+                weekAgo.setDate(today.getDate() - 7);
+                
+                document.getElementById('startDate').value = weekAgo.toISOString().split('T')[0];
+                document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            }
+        });
+
+        // معاينة البيانات المستوردة
+        function previewImport() {
+            const fileInput = document.getElementById('importFile');
+            const source = document.getElementById('importSource').value;
+            
+            if (!fileInput.files.length) {
+                showStatus('error', 'Please select a file first');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                try {
+                    let data = [];
+                    
+                    switch(source) {
+                        case 'excel':
+                            const workbook = XLSX.read(e.target.result, {type: 'binary'});
+                            const sheetName = workbook.SheetNames[0];
+                            data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                            break;
+                            
+                        case 'csv':
+                            const csvText = e.target.result;
+                            data = parseCSV(csvText);
+                            break;
+                            
+                        case 'json':
+                        case 'backup':
+                            data = JSON.parse(e.target.result);
+                            if (source === 'backup' && data.orders) {
+                                data = data.orders;
+                            }
+                            break;
+                    }
+
+                    if (data.length === 0) {
+                        showStatus('error', 'No data found in file');
+                        return;
+                    }
+
+                    // عرض المعاينة
+                    const previewDiv = document.getElementById('importPreview');
+                    const previewTable = document.getElementById('previewTable');
+                    
+                    previewTable.innerHTML = '';
+                    
+                    // إنشاء رأس الجدول
+                    const headers = Object.keys(data[0]);
+                    let headerRow = '<tr>';
+                    headers.forEach(header => {
+                        headerRow += `<th>${header}</th>`;
+                    });
+                    headerRow += '</tr>';
+                    previewTable.innerHTML = headerRow;
+                    
+                    // عرض أول 5 صفوف
+                    const rowsToShow = data.slice(0, 5);
+                    rowsToShow.forEach(row => {
+                        let rowHtml = '<tr>';
+                        headers.forEach(header => {
+                            rowHtml += `<td>${row[header] || ''}</td>`;
+                        });
+                        rowHtml += '</tr>';
+                        previewTable.innerHTML += rowHtml;
+                    });
+
+                    previewDiv.style.display = 'block';
+                    showStatus('info', `Found ${data.length} records. Previewing first 5 rows.`);
+
+                } catch (error) {
+                    showStatus('error', 'Error parsing file: ' + error.message);
+                }
+            };
+
+            if (source === 'excel') {
+                reader.readAsBinaryString(file);
+            } else {
+                reader.readAsText(file);
+            }
+        }
+
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n').filter(line => line.trim());
+            if (lines.length === 0) return [];
+            
+            const headers = lines[0].split(',').map(h => h.trim());
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                const obj = {};
+                headers.forEach((header, index) => {
+                    obj[header] = values[index] ? values[index].trim() : '';
+                });
+                data.push(obj);
+            }
+            
+            return data;
+        }
+
+        // تنفيذ الاستيراد
+        function executeImport() {
+            const fileInput = document.getElementById('importFile');
+            const source = document.getElementById('importSource').value;
+            const mode = document.getElementById('importMode').value;
+            
+            if (!fileInput.files.length) {
+                showStatus('error', 'Please select a file first');
+                return;
+            }
+
+            loadData(); // تحميل البيانات الحالية
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                try {
+                    let importedData = [];
+                    
+                    switch(source) {
+                        case 'excel':
+                            const workbook = XLSX.read(e.target.result, {type: 'binary'});
+                            const sheetName = workbook.SheetNames[0];
+                            importedData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                            break;
+                            
+                        case 'csv':
+                            const csvText = e.target.result;
+                            importedData = parseCSV(csvText);
+                            break;
+                            
+                        case 'json':
+                            importedData = JSON.parse(e.target.result);
+                            break;
+                            
+                        case 'backup':
+                            const backup = JSON.parse(e.target.result);
+                            importedData = backup.orders || [];
+                            if (backup.branches) branches = backup.branches;
+                            if (backup.agents) agents = backup.agents;
+                            if (backup.settings) settings = backup.settings;
+                            break;
+                    }
+
+                    if (importedData.length === 0) {
+                        showStatus('error', 'No valid data found in file');
+                        return;
+                    }
+
+                    // التحقق من الحقول المطلوبة
+                    const requiredFields = ['Order no', 'Cus. Name'];
+                    const sampleRow = importedData[0];
+                    const missingFields = requiredFields.filter(field => !sampleRow.hasOwnProperty(field));
+                    
+                    if (missingFields.length > 0) {
+                        showStatus('error', `Missing required fields: ${missingFields.join(', ')}`);
+                        return;
+                    }
+
+                    let stats = {
+                        added: 0,
+                        updated: 0,
+                        skipped: 0,
+                        newBranches: 0,
+                        newAgents: 0
+                    };
+
+                    // معالجة البيانات المستوردة
+                    importedData.forEach(newItem => {
+                        // إضافة الطوابع الزمنية
+                        if (!newItem['Created Date']) {
+                            newItem['Created Date'] = new Date().toISOString();
+                        }
+                        newItem['Last Updated'] = new Date().toISOString();
+                        
+                        // تعيين الحقول الافتراضية
+                        if (!newItem['status']) newItem['status'] = 'Pending';
+                        if (!newItem['Payment Status']) newItem['Payment Status'] = 'Pending';
+                        
+                        // البحث عن الطلب الموجود
+                        const existingIndex = ordersData.findIndex(item => item['Order no'] === newItem['Order no']);
+                        
+                        if (existingIndex !== -1) {
+                            // تحديث الطلب الموجود
+                            if (mode === 'merge' || mode === 'replace') {
+                                ordersData[existingIndex] = {...ordersData[existingIndex], ...newItem};
+                                stats.updated++;
+                            } else {
+                                stats.skipped++;
+                            }
+                        } else {
+                            // إضافة طلب جديد
+                            if (mode !== 'replace') {
+                                ordersData.push(newItem);
+                                stats.added++;
+                            }
+                        }
+                        
+                        // إضافة الفروع والوكلاء الجدد
+                        if (newItem['Outlet'] && !branches.includes(newItem['Outlet'])) {
+                            branches.push(newItem['Outlet']);
+                            stats.newBranches++;
+                        }
+                        if (newItem['Agent Name'] && !agents.includes(newItem['Agent Name'])) {
+                            agents.push(newItem['Agent Name']);
+                            stats.newAgents++;
+                        }
+                    });
+
+                    // في وضع الاستبدال، استبدال جميع البيانات
+                    if (mode === 'replace') {
+                        ordersData = importedData;
+                        stats.added = importedData.length;
+                        stats.updated = 0;
+                    }
+
+                    // حفظ البيانات
+                    saveData();
+                    
+                    // عرض النتائج
+                    const message = `
+                        Import completed successfully!<br>
+                        Added: ${stats.added} orders<br>
+                        Updated: ${stats.updated} orders<br>
+                        Skipped: ${stats.skipped} orders<br>
+                        New branches: ${stats.newBranches}<br>
+                        New agents: ${stats.newAgents}
+                    `;
+                    
+                    showStatus('success', message);
+                    
+                    // إعادة تحميل الصفحة الرئيسية إذا كانت مفتوحة
+                    notifyMainWindow();
+
+                } catch (error) {
+                    showStatus('error', 'Import failed: ' + error.message);
+                    console.error(error);
+                }
+            };
+
+            if (source === 'excel') {
+                reader.readAsBinaryString(file);
+            } else {
+                reader.readAsText(file);
+            }
+        }
+
+        // تنفيذ التصدير
+        function executeExport() {
+            loadData(); // تحميل البيانات الحالية
+            
+            if (ordersData.length === 0) {
+                showStatus('error', 'No data to export');
+                return;
+            }
+
+            const format = document.getElementById('exportFormat').value;
+            const range = document.getElementById('exportRange').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            // الحصول على الحقول المحددة
+            const selectedFields = Array.from(document.querySelectorAll('.export-field:checked'))
+                .map(cb => cb.value);
+            
+            if (selectedFields.length === 0) {
+                showStatus('error', 'Please select at least one field to export');
+                return;
+            }
+
+            // تصفية البيانات حسب النطاق الزمني
+            let filteredData = [...ordersData];
+            
+            if (range !== 'all') {
+                const today = new Date();
+                filteredData = ordersData.filter(order => {
+                    const orderDate = new Date(order['Order Date']);
+                    
+                    switch(range) {
+                        case 'today':
+                            return orderDate.toDateString() === today.toDateString();
+                        case 'week':
+                            const weekAgo = new Date();
+                            weekAgo.setDate(today.getDate() - 7);
+                            return orderDate >= weekAgo;
+                        case 'month':
+                            const monthAgo = new Date();
+                            monthAgo.setMonth(today.getMonth() - 1);
+                            return orderDate >= monthAgo;
+                        case 'custom':
+                            if (!startDate || !endDate) return true;
+                            const orderDateStr = orderDate.toISOString().split('T')[0];
+                            return orderDateStr >= startDate && orderDateStr <= endDate;
+                        default:
+                            return true;
+                    }
+                });
+            }
+            
+            if (filteredData.length === 0) {
+                showStatus('error', 'No data found for selected range');
+                return;
+            }
+
+            // إعداد البيانات للتصدير
+            const exportData = filteredData.map(order => {
+                const exportItem = {};
+                selectedFields.forEach(field => {
+                    if (order[field] !== undefined) {
+                        exportItem[field] = order[field];
+                    }
+                });
+                return exportItem;
+            });
+
+            // إنشاء اسم الملف
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+            let filename = '';
+            
+            switch(format) {
+                case 'excel':
+                    filename = `Delivery_Export_${timestamp}.xlsx`;
+                    exportToExcel(exportData, filename);
+                    break;
+                    
+                case 'pdf':
+                    filename = `Delivery_Report_${timestamp}.pdf`;
+                    exportToPDF(exportData, filename);
+                    break;
+                    
+                case 'csv':
+                    filename = `Delivery_Data_${timestamp}.csv`;
+                    exportToCSV(exportData, filename);
+                    break;
+                    
+                case 'json':
+                    filename = `Delivery_Data_${timestamp}.json`;
+                    exportToJSON(exportData, filename);
+                    break;
+                    
+                case 'backup':
+                    filename = `Delivery_Backup_${timestamp}.json`;
+                    exportBackup(filename);
+                    break;
+            }
+        }
+
+        // التصدير إلى Excel
+        function exportToExcel(data, filename) {
+            try {
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Orders");
+                
+                // إضافة صفحة ملخص
+                const summaryData = [
+                    ['Export Summary', ''],
+                    ['Total Orders', data.length],
+                    ['Export Date', new Date().toLocaleString()],
+                    ['Fields Exported', Object.keys(data[0] || {}).join(', ')]
+                ];
+                
+                const ws2 = XLSX.utils.aoa_to_sheet(summaryData);
+                XLSX.utils.book_append_sheet(wb, ws2, "Summary");
+                
+                XLSX.writeFile(wb, filename);
+                showStatus('success', `Exported ${data.length} orders to ${filename}`);
+            } catch (error) {
+                showStatus('error', 'Excel export failed: ' + error.message);
+            }
+        }
+
+        // التصدير إلى PDF
+        function exportToPDF(data, filename) {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // العنوان
+                doc.setFontSize(18);
+                doc.setTextColor(40);
+                doc.text('Delivery Report', 105, 20, { align: 'center' });
+                
+                // التاريخ
+                doc.setFontSize(11);
+                doc.setTextColor(100);
+                doc.text(`Exported: ${new Date().toLocaleString()}`, 14, 35);
+                doc.text(`Total Orders: ${data.length}`, 14, 42);
+                
+                // إنشاء الجدول
+                const headers = Object.keys(data[0] || {});
+                const tableData = data.map(row => headers.map(header => row[header] || ''));
+                
+                doc.autoTable({
+                    head: [headers],
+                    body: tableData,
+                    startY: 50,
+                    theme: 'grid',
+                    headStyles: { fillColor: [231, 76, 60] },
+                    margin: { top: 50 }
+                });
+                
+                doc.save(filename);
+                showStatus('success', `Exported ${data.length} orders to ${filename}`);
+            } catch (error) {
+                showStatus('error', 'PDF export failed: ' + error.message);
+            }
+        }
+
+        // التصدير إلى CSV
+        function exportToCSV(data, filename) {
+            try {
+                if (data.length === 0) {
+                    showStatus('error', 'No data to export');
+                    return;
+                }
+                
+                const headers = Object.keys(data[0] || {});
+                const csvRows = [headers.join(',')];
+                
+                data.forEach(row => {
+                    const values = headers.map(header => {
+                        const value = row[header];
+                        // إضافة علامات اقتباس إذا كانت القيمة تحتوي على فواصل
+                        return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
+                    });
+                    csvRows.push(values.join(','));
+                });
+                
+                const csvContent = csvRows.join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                saveAs(blob, filename);
+                
+                showStatus('success', `Exported ${data.length} orders to ${filename}`);
+            } catch (error) {
+                showStatus('error', 'CSV export failed: ' + error.message);
+            }
+        }
+
+        // التصدير إلى JSON
+        function exportToJSON(data, filename) {
+            try {
+                const jsonContent = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonContent], { type: 'application/json' });
+                saveAs(blob, filename);
+                
+                showStatus('success', `Exported ${data.length} orders to ${filename}`);
+            } catch (error) {
+                showStatus('error', 'JSON export failed: ' + error.message);
+            }
+        }
+
+        // تصدير النسخة الاحتياطية الكاملة
+        function exportBackup(filename) {
+            try {
+                const backup = {
+                    orders: ordersData,
+                    branches: branches,
+                    agents: agents,
+                    settings: settings,
+                    timestamp: new Date().toISOString(),
+                    version: '1.0'
+                };
+                
+                const jsonContent = JSON.stringify(backup, null, 2);
+                const blob = new Blob([jsonContent], { type: 'application/json' });
+                saveAs(blob, filename);
+                
+                showStatus('success', `Full system backup exported to ${filename}`);
+            } catch (error) {
+                showStatus('error', 'Backup export failed: ' + error.message);
+            }
+        }
+
+        // التصدير السريع
+        function quickExport(type) {
+            loadData();
+            
+            if (ordersData.length === 0) {
+                showStatus('error', 'No data to export');
+                return;
+            }
+
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+            
+            switch(type) {
+                case 'daily':
+                    const today = new Date().toDateString();
+                    const dailyData = ordersData.filter(order => 
+                        new Date(order['Order Date']).toDateString() === today
+                    );
+                    
+                    if (dailyData.length === 0) {
+                        showStatus('info', 'No orders for today');
+                        return;
+                    }
+                    
+                    exportToExcel(dailyData, `Daily_Report_${timestamp}.xlsx`);
+                    break;
+                    
+                case 'agents':
+                    const agentStats = {};
+                    ordersData.forEach(order => {
+                        const agent = order['Agent Name'] || 'Unassigned';
+                        if (!agentStats[agent]) {
+                            agentStats[agent] = {
+                                agent: agent,
+                                total: 0,
+                                delivered: 0,
+                                revenue: 0
+                            };
+                        }
+                        agentStats[agent].total++;
+                        if (order.status === 'Delivered') {
+                            agentStats[agent].delivered++;
+                            agentStats[agent].revenue += Number(order['Order Total'] || 0);
+                        }
+                    });
+                    
+                    const agentData = Object.values(agentStats).map(stats => ({
+                        'Agent': stats.agent,
+                        'Total Orders': stats.total,
+                        'Delivered': stats.delivered,
+                        'Success Rate': `${((stats.delivered / stats.total) * 100).toFixed(1)}%`,
+                        'Revenue': `AED ${stats.revenue.toFixed(2)}`
+                    }));
+                    
+                    exportToExcel(agentData, `Agent_Performance_${timestamp}.xlsx`);
+                    break;
+                    
+                case 'revenue':
+                    const revenueData = ordersData
+                        .filter(order => order.status === 'Delivered')
+                        .map(order => ({
+                            'Order ID': order['Order no'],
+                            'Date': new Date(order['Order Date']).toLocaleDateString(),
+                            'Customer': order['Cus. Name'],
+                            'Outlet': order['Outlet'],
+                            'Agent': order['Agent Name'] || 'Unassigned',
+                            'Amount': `AED ${order['Order Total']}`
+                        }));
+                    
+                    exportToExcel(revenueData, `Revenue_Report_${timestamp}.xlsx`);
+                    break;
+                    
+                case 'backup':
+                    exportBackup(`System_Backup_${timestamp}.json`);
+                    break;
+            }
+        }
+
+        // تنزيل القوالب
+        function downloadTemplate(type) {
+            const templateData = [{
+                'Order no': 'ORD-1001',
+                'Order Date': new Date().toISOString(),
+                'Cus. Name': 'Customer Name',
+                'Cus Phone': '+971501234567',
+                'Address': '123 Street, Dubai',
+                'Outlet': 'Hamdan',
+                'Order Total': '150.00',
+                'Agent Name': 'Agent Name',
+                'status': 'Pending',
+                'Payment Status': 'Pending',
+                'Notes': 'Delivery notes here',
+                'Order Items': 'Crispy Chicken, Fries, Drink'
+            }];
+            
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+            
+            if (type === 'excel') {
+                const ws = XLSX.utils.json_to_sheet(templateData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Template");
+                
+                // إضافة صفحة التعليمات
+                const instructions = [
+                    ['Import Template Instructions'],
+                    [''],
+                    ['Required Fields: Order no, Cus. Name, Order Total'],
+                    ['Optional Fields: All other fields'],
+                    [''],
+                    ['Status Options: Pending, Assigned, Out for Delivery, Delivered, Cancelled, Returned'],
+                    ['Payment Options: Pending, Paid, COD, Refunded'],
+                    [''],
+                    ['Notes:'],
+                    ['1. Order no must be unique'],
+                    ['2. Order Date should be in ISO format'],
+                    ['3. Keep column names exactly as shown'],
+                    ['4. Remove this instruction sheet before importing']
+                ];
+                
+                const ws2 = XLSX.utils.aoa_to_sheet(instructions);
+                XLSX.utils.book_append_sheet(wb, ws2, "Instructions");
+                
+                XLSX.writeFile(wb, `Import_Template_${timestamp}.xlsx`);
+            } else if (type === 'csv') {
+                const headers = Object.keys(templateData[0]);
+                const csvRows = [headers.join(',')];
+                
+                templateData.forEach(row => {
+                    const values = headers.map(header => row[header]);
+                    csvRows.push(values.join(','));
+                });
+                
+                const csvContent = csvRows.join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                saveAs(blob, `Import_Template_${timestamp}.csv`);
+            }
+            
+            showStatus('success', `Template downloaded successfully`);
+        }
+
+        // حفظ البيانات في localStorage
+        function saveData() {
+            try {
+                localStorage.setItem('deliveryApp_orders', JSON.stringify(ordersData));
+                localStorage.setItem('deliveryApp_branches', JSON.stringify(branches));
+                localStorage.setItem('deliveryApp_agents', JSON.stringify(agents));
+                localStorage.setItem('deliveryApp_settings', JSON.stringify(settings));
+            } catch (error) {
+                showStatus('error', 'Error saving data: ' + error.message);
+            }
+        }
+
+        // إشعار النافذة الرئيسية
+        function notifyMainWindow() {
+            try {
+                if (window.opener && !window.opener.closed) {
+                    window.opener.postMessage({
+                        type: 'dataUpdated',
+                        message: 'Data imported successfully'
+                    }, '*');
+                }
+            } catch (error) {
+                // تجاهل الخطأ إذا لم تكن النافذة الرئيسية مفتوحة
+            }
+        }
+
+        // عرض حالة العملية
+        function showStatus(type, message) {
+            const statusBar = type === 'import' ? 
+                document.getElementById('importStatus') : 
+                document.getElementById('exportStatus');
+            
+            statusBar.className = `status-bar status-${type}`;
+            statusBar.innerHTML = message;
+            statusBar.style.display = 'block';
+            
+            // إخفاء تلقائي للرسائل الناجحة
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusBar.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // تحميل البيانات عند فتح الصفحة
+        window.onload = function() {
+            loadData();
+            showStatus('info', 'Import/Export tools ready. Loaded ' + ordersData.length + ' orders.');
+        };
+
+        // معالجة رسائل النافذة الرئيسية
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'requestData') {
+                loadData();
+                event.source.postMessage({
+                    type: 'dataResponse',
+                    orders: ordersData.length,
+                    branches: branches.length,
+                    agents: agents.length
+                }, '*');
+            }
+        });
+    </script>
+</body>
+</html>
